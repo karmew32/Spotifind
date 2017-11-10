@@ -31,7 +31,7 @@
         </div>
         <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button>
 		<button class="btn btn-default" id="get-users-playlists">Get the user's playlists</button>
-		<button class="btn btn-default" id="process-user-data" disabled>Process your selected data</button>
+		
 		<select id="plistdrop"> <!--Supplement an id here instead of using 'name'-->
 </select>
 
@@ -45,7 +45,6 @@
 <text id="onemoment"> </text>
 
 <button class="btn btn-default" id="get-public-playlist">Find a public playlist</button>
-<button class="btn btn-default" id="process-public-data" disabled>Process public data</button>
 			  	<header>
 				<dt>Displferfewwefe</dt>
 	</header>
@@ -251,33 +250,29 @@
 		    document.getElementById('get-users-playlists').addEventListener('click', function() {
 			getPlaylistAttributes(userid, pListID[plistdrop.selectedIndex]);
 			 document.getElementById('onemoment').innerHTML = 'One moment please...';
+			 document.getElementById('get-users-playlists').disabled = true;
+			 document.getElementById('get-public-playlist').disabled = true;
 			setTimeout(function(){
-			document.getElementById('process-user-data').disabled = false;
+			 isCertainlyUser(true);
+			//document.getElementById('process-user-data').disabled = false;
+			document.getElementById('get-users-playlists').disabled = false;
+			 document.getElementById('get-public-playlist').disabled = false;
 			document.getElementById('onemoment').innerHTML = ' ';
-			},1500);
+			},2000);
 	
           }, false);
 		  document.getElementById('get-public-playlist').addEventListener('click', function() {
 		  getPlaylistAttributes(document.getElementById('otheruserid').value,document.getElementById('playlistid').value);
 		 document.getElementById('onemoment').innerHTML = 'One moment please...';
+		 			 document.getElementById('get-users-playlists').disabled = true;
+			 document.getElementById('get-public-playlist').disabled = true;
 		  setTimeout(function(){
-		  document.getElementById('process-public-data').disabled = false;
-		  document.getElementById('onemoment').innerHTML = ' ';
-		  },1500);
-		  }, false);
-		  
-		    document.getElementById('process-user-data').addEventListener('click', function() {
-		  isCertainlyUser(true);
-		  console.log(songA[0].id);
-		  console.log('u: ' + songU.length);
-		  document.getElementById('process-user-data').disabled = true;
-		  }, false);
-		  
-		   document.getElementById('process-public-data').addEventListener('click', function() {
 		  isCertainlyUser(false);
-		  console.log(songA[0].id);
-		  console.log('p: ' + songP.length);
-		  document.getElementById('process-public-data').disabled = true;
+		  document.getElementById('get-users-playlists').disabled = false;
+		  document.getElementById('get-public-playlist').disabled = false;
+		 // document.getElementById('process-public-data').disabled = false;
+		  document.getElementById('onemoment').innerHTML = ' ';
+		  },2000);
 		  }, false);
 		  
 
@@ -339,29 +334,6 @@
     }      
           }
 		  
-		  function displayArrayData(m){
-		 
-		  var arrlist = document.querySelector('section.arrlist');
-		  var rArticle = document.createElement('article');
-            var rH2 = document.createElement('h2');
-            var rPara1 = document.createElement('p');
-            var rPara2 = document.createElement('p');
-            var rPara3 = document.createElement('p');
-            var rList = document.createElement('ul');
-			rH2.textContent = songA[m].id;
-            rPara1.textContent = 'Speechiness: ' + songA[m].speechiness;
-            rPara2.textContent = 'Acousticness: ' + songA[m].acousticness;
-            rPara3.textContent = 'Instrumentalness:' + songA[m].instrumentalness;
-			rArticle.appendChild(rH2);
-            rArticle.appendChild(rPara1);
-            rArticle.appendChild(rPara2);
-            rArticle.appendChild(rPara3);
-            rArticle.appendChild(rList);
-			arrlist.appendChild(rArticle);
-			
-			
-			
-		  }
 		  
 		  function isCertainlyUser(b){
 		  console.log(b + ' ' + songA[0].id);
