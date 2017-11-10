@@ -1,0 +1,552 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Example of the Authorization Code flow with Spotify</title>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <style type="text/css">
+      #login, #loggedin {
+        display: none;
+      }
+      .text-overflow {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width: 500px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div id="login">
+        <h1>This is an example of the Authorization Code flow</h1>
+        <a href="/login" class="btn btn-primary">Log in with Spotify</a>
+      </div>
+      <div id="loggedin">
+        <div id="user-profile">
+        </div>
+        <div id="oauth">
+        </div>
+		<div id="playlist">
+        </div>
+        <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button>
+		<button class="btn btn-default" id="get-users-playlists">Get the user's playlists</button>
+		<select id="plistdrop"> <!--Supplement an id here instead of using 'name'-->
+</select>
+
+ <form>
+  Playlist ID:<br>
+  <input type="text" id="playlistid"><br>
+  User ID:<br>
+  <input type="text" id="otheruserid">
+</form> 
+<button class="btn btn-default" id="get-public-playlist">Find a public playlist</button>
+<button class="btn btn-default" id="display-array-data">Display array data</button>
+			  	<header>
+				<dt>Displferfewwefe</dt>
+	</header>
+	<section class="playlistlist">
+	</section>
+	
+
+	
+		<section class="songlist">
+	</section>
+	
+	<section class="attributelist">
+	</section>
+	
+		<section class="arrlist">
+	</section>
+      </div>
+
+    </div>
+	
+
+
+    <script id="user-profile-template" type="text/x-handlebars-template">
+      <h1>Logged in as {{display_name}}</h1>
+      <div class="media">
+        <div class="pull-left">
+          <img class="media-object" width="150" src="{{images.0.url}}" />
+        </div>
+        <div class="media-body">
+          <dl class="dl-horizontal">
+            <dt>Display name</dt><dd class="clearfix">{{display_name}}</dd>
+            <dt>Id</dt><dd>{{id}}</dd>
+            <dt>Email</dt><dd>{{email}}</dd>
+            <dt>Spotify URI</dt><dd><a href="{{external_urls.spotify}}">{{external_urls.spotify}}</a></dd>
+            <dt>Link</dt><dd><a href="{{href}}">{{href}}</a></dd>
+            <dt>Profile Image</dt><dd class="clearfix"><a href="{{images.0.url}}">{{images.0.url}}</a></dd>
+            <dt>Country</dt><dd>{{country}}</dd>
+          </dl>
+        </div>
+      </div>
+    </script>
+
+    <script id="oauth-template" type="text/x-handlebars-template">
+      <h2>oAuth info</h2>
+      <dl class="dl-horizontal">
+        <dt>Access token</dt><dd class="text-overflow">{{access_token}}</dd>
+        <dt>Refresh token</dt><dd class="text-overflow">{{refresh_token}}></dd>
+      </dl>
+    </script>
+	
+	<script id="playlist-template" type="text/x-handlebars-template">
+      <h2>Playlist info</h2>
+      <dl class="dl-horizontal">
+        <dt>Usernam</dt><dd class="text">{{items.0.name}}</dd>
+        <dt>Refreserrfh token</dt><dd class="text">{{href}}></dd>
+      </dl>
+    </script>
+	
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
+    <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+    <script>
+      (function() {
+	  var idA = [];
+		    var danceabilityA = [];
+			var energyA = [];
+			var keyA = [];
+			var loudnessA = [];
+			var modeA = [];
+			var speechinessA = [];
+			var acousticnessA = [];
+			var instrumentalnessA = [];
+			var livenessA = [];
+			var valenceA = [];
+			var tempoA = [];
+			var duration_msA = [];
+			var time_signatureA = [];
+       var pListID = [];
+        /**
+         * Obtains parameters from the hash of the URL
+         * @return Object
+         */
+        function getHashParams() {
+          var hashParams = {};
+          var e, r = /([^&;=]+)=?([^&;]*)/g,
+              q = window.location.hash.substring(1);
+          while ( e = r.exec(q)) {
+             hashParams[e[1]] = decodeURIComponent(e[2]);
+          }
+          return hashParams;
+        }
+        var userid = 'duummy';
+        var userProfileSource = document.getElementById('user-profile-template').innerHTML,
+            userProfileTemplate = Handlebars.compile(userProfileSource),
+            userProfilePlaceholder = document.getElementById('user-profile');
+
+        var oauthSource = document.getElementById('oauth-template').innerHTML,
+            oauthTemplate = Handlebars.compile(oauthSource),
+            oauthPlaceholder = document.getElementById('oauth');
+			
+	    var playlistSource = document.getElementById('playlist-template').innerHTML,
+            playlistTemplate = Handlebars.compile(playlistSource),
+            playlistPlaceholder = document.getElementById('playlist');
+
+        var params = getHashParams();
+
+        var access_token = params.access_token,
+            refresh_token = params.refresh_token,
+            error = params.error;
+
+        if (error) {
+          alert('There was an error during the authentication');
+        } else {
+          if (access_token) {
+            // render oauth info
+            oauthPlaceholder.innerHTML = oauthTemplate({
+              access_token: access_token,
+              refresh_token: refresh_token
+            });
+
+            $.ajax({
+                url: 'https://api.spotify.com/v1/me',
+                headers: {
+                  'Authorization': 'Bearer ' + access_token
+                },
+                success: function(response) {
+                  userProfilePlaceholder.innerHTML = userProfileTemplate(response);
+				  //var parsed = JSON.parse(response);
+                  userid = response.id;
+
+                  $('#login').hide();
+                  $('#loggedin').show();
+				  console.log('it gets here');
+				  
+                }
+            });
+			var header = document.querySelector('header');
+    var section = document.querySelector('section.playlistlist');
+	var plistdrop = document.getElementById('plistdrop');
+	var requestURL = 'https://api.spotify.com/v1/me/playlists'
+	var request = new XMLHttpRequest();
+	request.open('GET', requestURL);
+	request.responseType = 'json';
+	request.setRequestHeader('Authorization', 'Bearer ' + access_token);
+    request.send();
+	request.onload = function() {
+      var pLists = request.response;
+	  //var pLists = JSON.parse(pListsText);
+      showLists(pLists);
+     }
+	 function showLists(jsonObj) {
+     var lists = jsonObj['items'];
+     
+     for (var i = 0; i < lists.length; i++) {
+     var myArticle = document.createElement('article');
+     var myH2 = document.createElement('h2');
+     var myPara1 = document.createElement('p');
+     var myPara2 = document.createElement('p');
+     var myPara3 = document.createElement('p');
+     var myList = document.createElement('ul');
+	 var meList = document.createElement('option');
+
+     myH2.textContent = lists[i].name;
+     myPara1.textContent = 'ID: ' + lists[i].id;
+     myPara2.textContent = 'Tracks: ' + lists[i].tracks.total;
+     myPara3.textContent = 'URI:' + lists[i].uri;
+	 meList.textContent = lists[i].name;
+	 pListID.push(lists[i].id); 
+
+     myArticle.appendChild(myH2);
+     myArticle.appendChild(myPara1);
+     myArticle.appendChild(myPara2);
+     myArticle.appendChild(myPara3);
+     myArticle.appendChild(myList);
+	 plistdrop.add(meList);
+
+     section.appendChild(myArticle);
+      }
+    }
+			$.ajax({
+                url: 'https://api.spotify.com/v1/me/playlists',
+                headers: {
+                  'Authorization': 'Bearer ' + access_token
+                },
+				json: true,
+                success: function(response) {
+                  playlistPlaceholder.innerHTML = playlistTemplate(response);
+
+                }
+            });
+			
+			
+          } else {
+              // render initial screen
+              $('#login').show();
+              $('#loggedin').hide();
+          }
+
+       document.getElementById('obtain-new-token').addEventListener('click', function() {
+            $.ajax({
+              url: '/refresh_token',
+              data: {
+                'refresh_token': refresh_token
+              }
+            }).done(function(data) {
+              access_token = data.access_token;
+              oauthPlaceholder.innerHTML = oauthTemplate({
+                access_token: access_token,
+                refresh_token: refresh_token
+              });
+            });
+          }, false);
+		  
+		    document.getElementById('get-users-playlists').addEventListener('click', function() {
+			getPlaylistAttributes(userid, pListID[plistdrop.selectedIndex]);
+		/*	var danceabilityA = [];
+			var energyA = [];
+			var keyA = [];
+			var loudnessA = [];
+			var modeA = [];
+			var speechinessA = [];
+			var acousticnessA = [];
+			var instrumentalnessA = [];
+			var livenessA = [];
+			var valenceA = [];
+			var tempoA = [];
+			var duration_msA = [];
+			var time_signatureA = [];
+			var songID = [];
+			var noSongs = 0;
+			var solist = document.querySelector('section.songlist');
+			var srequestURL = 'https://api.spotify.com/v1/users/' + userid + '/playlists/' +  pListID[plistdrop.selectedIndex] + '/tracks';
+	        var srequest = new XMLHttpRequest();
+            srequest.open('GET', srequestURL);
+	        srequest.responseType = 'json';
+	        srequest.setRequestHeader('Authorization', 'Bearer ' + access_token);
+            srequest.send();
+				srequest.onload = function() {
+            var sLists = srequest.response;
+            showSLists(sLists);
+            }
+	        function showSLists(jsonObj) {
+            var songs = jsonObj['items'];
+            noSongs = songs.length;
+            for (var i = 0; i < songs.length; i++) {
+            var sArticle = document.createElement('article');
+            var sH2 = document.createElement('h2');
+            var sPara1 = document.createElement('p');
+            var sPara2 = document.createElement('p');
+            var sPara3 = document.createElement('p');
+            var sList = document.createElement('ul');
+	        //var seList = document.createElement('option');
+            sH2.textContent = songs[i].track.name;
+            sPara1.textContent = 'ID: ' + songs[i].track.id;
+            sPara2.textContent = 'Duration: ' + songs[i].track.duration_ms;
+            sPara3.textContent = 'URI:' + songs[i].track.uri;
+	        //meList.textContent = songs[i].name;
+	        songID.push(songs[i].track.id);        
+            sArticle.appendChild(sH2);
+            sArticle.appendChild(sPara1);
+            sArticle.appendChild(sPara2);
+            sArticle.appendChild(sPara3);
+            sArticle.appendChild(sList);
+	        //plistdrop.add(meList);
+            solist.appendChild(sArticle);
+			
+			
+      }
+	   for (var j=0; j<noSongs; j++) (function(){
+	        var atlist = document.querySelector('section.attributelist');
+			var arequestURL = 'https://api.spotify.com/v1/audio-features/' + songID[j];
+			var arequest = new XMLHttpRequest();
+			arequest.open('GET', arequestURL);
+	        arequest.responseType = 'json';
+	        arequest.setRequestHeader('Authorization', 'Bearer ' + access_token);
+            arequest.send();
+			arequest.onload = function() {
+            var aLists = arequest.response;
+            showALists(aLists);
+            }
+			function showALists(jsonObj) {
+            var atts = jsonObj;
+			danceabilityA.push(atts.danceability);
+			energyA.push(atts.energy);
+			keyA.push(atts.key);
+			loudnessA.push(atts.loudness);
+			modeA.push(atts.mode);
+			speechinessA.push(atts.speechiness);
+			acousticnessA.push(atts.acousticness);
+			instrumentalnessA.push(atts.instrumentalness);
+			livenessA.push(atts.liveness);
+			valenceA.push(atts.valence);
+			tempoA.push(atts.tempo);
+            duration_msA.push(atts.duration_ms);
+			time_signatureA.push(atts.time_signature);
+			var aArticle = document.createElement('article');
+            var aH2 = document.createElement('h2');
+            var aPara1 = document.createElement('p');
+            var aPara2 = document.createElement('p');
+            var aPara3 = document.createElement('p');
+            var aList = document.createElement('ul');
+	        //var seList = document.createElement('option');
+            aH2.textContent = atts.id;
+            aPara1.textContent = 'Speechiness: ' + atts.speechiness;
+            aPara2.textContent = 'Acousticness: ' + atts.acousticness;
+            aPara3.textContent = 'Instrumentalness:' + atts.instrumentalness;
+			aArticle.appendChild(aH2);
+            aArticle.appendChild(aPara1);
+            aArticle.appendChild(aPara2);
+            aArticle.appendChild(aPara3);
+            aArticle.appendChild(aList);
+			atlist.appendChild(aArticle);
+			}})(j);
+    }      */
+          }, false);
+		  document.getElementById('get-public-playlist').addEventListener('click', function() {
+		  getPlaylistAttributes(document.getElementById('otheruserid').value,document.getElementById('playlistid').value);
+		  }, false);
+		  
+		   document.getElementById('display-array-data').addEventListener('click', function() {
+		  displayArrayData(0);
+		  }, false);
+		  
+
+        }
+		
+		//NOTE: the order playlists are returned is random
+		function getPlaylistAttributes(theuserid, theplaylistid){
+		    idA = [];
+		    danceabilityA = [];
+			energyA = [];
+			keyA = [];
+			loudnessA = [];
+			modeA = [];
+			speechinessA = [];
+			acousticnessA = [];
+			instrumentalnessA = [];
+			livenessA = [];
+			valenceA = [];
+			tempoA = [];
+			duration_msA = [];
+			time_signatureA = [];
+			var songID = [];
+			var noSongs = 0;
+			var solist = document.querySelector('section.songlist');
+			var srequestURL = 'https://api.spotify.com/v1/users/' + theuserid + '/playlists/' +  theplaylistid + '/tracks';
+	        var srequest = new XMLHttpRequest();
+            srequest.open('GET', srequestURL);
+	        srequest.responseType = 'json';
+	        srequest.setRequestHeader('Authorization', 'Bearer ' + access_token);
+            srequest.send();
+				srequest.onload = function() {
+            var sLists = srequest.response;
+            showSLists(sLists);
+            }
+	        function showSLists(jsonObj) {
+            var songs = jsonObj['items'];
+            noSongs = songs.length;
+            for (var i = 0; i < songs.length; i++) {
+            var sArticle = document.createElement('article');
+            var sH2 = document.createElement('h2');
+            var sPara1 = document.createElement('p');
+            var sPara2 = document.createElement('p');
+            var sPara3 = document.createElement('p');
+            var sList = document.createElement('ul');
+	        //var seList = document.createElement('option');
+            sH2.textContent = songs[i].track.name;
+            sPara1.textContent = 'ID: ' + songs[i].track.id;
+            sPara2.textContent = 'Duration: ' + songs[i].track.duration_ms;
+            sPara3.textContent = 'URI:' + songs[i].track.uri;
+	        //meList.textContent = songs[i].name;
+	        songID.push(songs[i].track.id);        
+            sArticle.appendChild(sH2);
+            sArticle.appendChild(sPara1);
+            sArticle.appendChild(sPara2);
+            sArticle.appendChild(sPara3);
+            sArticle.appendChild(sList);
+	        //plistdrop.add(meList);
+            solist.appendChild(sArticle);
+			
+			
+      }
+	   for (var j=0; j<noSongs; j++) (function(){
+	        var atlist = document.querySelector('section.attributelist');
+			var arequestURL = 'https://api.spotify.com/v1/audio-features/' + songID[j];
+			var arequest = new XMLHttpRequest();
+			arequest.open('GET', arequestURL);
+	        arequest.responseType = 'json';
+	        arequest.setRequestHeader('Authorization', 'Bearer ' + access_token);
+            arequest.send();
+			arequest.onload = function() {
+            var aLists = arequest.response;
+            showALists(aLists);
+            }
+			function showALists(jsonObj) {
+            var atts = jsonObj;
+
+			//if (j>0) { if (document.getElementById('art' + (j-1)) == null){ alert('aint exist');}}
+			var aArticle = document.createElement('article');
+			//aArticle.id = ('art' + j);
+            var aH2 = document.createElement('h2');
+            var aPara1 = document.createElement('p');
+            var aPara2 = document.createElement('p');
+            var aPara3 = document.createElement('p');
+            var aList = document.createElement('ul');
+	        //var seList = document.createElement('option');
+            aH2.textContent = atts.id;
+            aPara1.textContent = 'Speechiness: ' + atts.speechiness;
+            aPara2.textContent = 'Acousticness: ' + atts.acousticness;
+            aPara3.textContent = 'Instrumentalness:' + atts.instrumentalness;
+			idA.push(atts.id);
+			danceabilityA.push(atts.danceability);
+			energyA.push(atts.energy);
+			keyA.push(atts.key);
+			loudnessA.push(atts.loudness);
+			modeA.push(atts.mode);
+			speechinessA.push(atts.speechiness);
+			acousticnessA.push(atts.acousticness);
+			instrumentalnessA.push(atts.instrumentalness);
+			livenessA.push(atts.liveness);
+			valenceA.push(atts.valence);
+			tempoA.push(atts.tempo);
+            duration_msA.push(atts.duration_ms);
+			time_signatureA.push(atts.time_signature);
+			aArticle.appendChild(aH2);
+            aArticle.appendChild(aPara1);
+            aArticle.appendChild(aPara2);
+            aArticle.appendChild(aPara3);
+            aArticle.appendChild(aList);
+			atlist.appendChild(aArticle);
+			}})(j);
+    }      
+          }
+		  
+		  function displayArrayData(m){
+		 
+		  var arrlist = document.querySelector('section.arrlist');
+		  var rArticle = document.createElement('article');
+			//aArticle.id = ('art' + j);
+			alert(idA[0]); 
+            var rH2 = document.createElement('h2');
+            var rPara1 = document.createElement('p');
+            var rPara2 = document.createElement('p');
+            var rPara3 = document.createElement('p');
+            var rList = document.createElement('ul');
+			rH2.textContent = idA[m];
+            rPara1.textContent = 'Speechiness: ' + speechinessA[m];
+            rPara2.textContent = 'Acousticness: ' + acousticnessA[m];
+            rPara3.textContent = 'Instrumentalness:' + instrumentalnessA[m];
+			rArticle.appendChild(rH2);
+            rArticle.appendChild(rPara1);
+            rArticle.appendChild(rPara2);
+            rArticle.appendChild(rPara3);
+            rArticle.appendChild(rList);
+			arrlist.appendChild(rArticle);
+			
+		  }
+      })();
+    </script>
+	
+	<script>
+	/*var header = document.querySelector('header');
+    var section = document.querySelector('section');
+    var myHeaders = new Headers();
+	myHeaders.append('Content-Type', 'image/jpeg');
+	var requestURL = 'https://api.spotify.com/v1/me/playlists
+	var request = new XMLHttpRequest();
+	request.open('GET', requestURL);
+	request.responseType = 'json';
+    request.send();
+	request.onload = function() {
+      var pListsText = request.response;
+	  var pLists = JSON.parse(pListsText);
+      showLists(pLists);
+     }
+	 function showLists(jsonObj) {
+     var lists = jsonObj['items'];
+      
+     for (var i = 0; i < lists.length; i++) {
+     var myArticle = document.createElement('article');
+     var myH2 = document.createElement('h2');
+     var myPara1 = document.createElement('p');
+     var myPara2 = document.createElement('p');
+     var myPara3 = document.createElement('p');
+     var myList = document.createElement('ul');
+
+     myH2.textContent = lists[i].name;
+     myPara1.textContent = 'ID: ' + lists[i].id;
+     myPara2.textContent = 'Tracks: ' + lists[i].tracks.total;
+     myPara3.textContent = 'URI:' + lists[i].uri;
+        
+
+     myArticle.appendChild(myH2);
+     myArticle.appendChild(myPara1);
+     myArticle.appendChild(myPara2);
+     myArticle.appendChild(myPara3);
+     myArticle.appendChild(myList);
+
+     section.appendChild(myArticle);
+      }
+    }*/
+	 
+	</script>
+	
+
+  </body>
+</html>
+

@@ -1,0 +1,399 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Example of the Authorization Code flow with Spotify</title>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <style type="text/css">
+      #login, #loggedin {
+        display: none;
+      }
+      .text-overflow {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width: 500px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div id="login">
+        <h1>This is an example of the Authorization Code flow</h1>
+        <a href="/login" class="btn btn-primary">Log in with Spotify</a>
+      </div>
+      <div id="loggedin">
+        <div id="user-profile">
+        </div>
+        <div id="oauth">
+        </div>
+		<div id="playlist">
+        </div>
+        <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button>
+		<button class="btn btn-default" id="get-users-playlists">Get the user's playlists</button>
+		<button class="btn btn-default" id="process-user-data" disabled>Process your selected data</button>
+		<select id="plistdrop"> <!--Supplement an id here instead of using 'name'-->
+</select>
+
+ <form>
+  Playlist ID:<br>
+  <input type="text" id="playlistid"><br>
+  User ID:<br>
+  <input type="text" id="otheruserid">
+</form>
+
+<text id="onemoment"> </text>
+
+<button class="btn btn-default" id="get-public-playlist">Find a public playlist</button>
+<button class="btn btn-default" id="process-public-data" disabled>Process public data</button>
+			  	<header>
+				<dt>Displferfewwefe</dt>
+	</header>
+	<section class="playlistlist">
+	</section>
+	
+
+	
+		<section class="songlist">
+	</section>
+	
+	<section class="attributelist">
+	</section>
+	
+		<section class="arrlist">
+	</section>
+      </div>
+
+    </div>
+	
+
+
+    <script id="user-profile-template" type="text/x-handlebars-template">
+      <h1>Logged in as {{display_name}}</h1>
+      <div class="media">
+        <div class="pull-left">
+          <img class="media-object" width="150" src="{{images.0.url}}" />
+        </div>
+        <div class="media-body">
+          <dl class="dl-horizontal">
+            <dt>Display name</dt><dd class="clearfix">{{display_name}}</dd>
+            <dt>Id</dt><dd>{{id}}</dd>
+            <dt>Email</dt><dd>{{email}}</dd>
+            <dt>Spotify URI</dt><dd><a href="{{external_urls.spotify}}">{{external_urls.spotify}}</a></dd>
+            <dt>Link</dt><dd><a href="{{href}}">{{href}}</a></dd>
+            <dt>Profile Image</dt><dd class="clearfix"><a href="{{images.0.url}}">{{images.0.url}}</a></dd>
+            <dt>Country</dt><dd>{{country}}</dd>
+          </dl>
+        </div>
+      </div>
+    </script>
+
+    <script id="oauth-template" type="text/x-handlebars-template">
+      <h2>oAuth info</h2>
+      <dl class="dl-horizontal">
+        <dt>Access token</dt><dd class="text-overflow">{{access_token}}</dd>
+        <dt>Refresh token</dt><dd class="text-overflow">{{refresh_token}}></dd>
+      </dl>
+    </script>
+	
+	<script id="playlist-template" type="text/x-handlebars-template">
+      <h2>Playlist info</h2>
+      <dl class="dl-horizontal">
+        <dt>Usernam</dt><dd class="text">{{items.0.name}}</dd>
+        <dt>Refreserrfh token</dt><dd class="text">{{href}}></dd>
+      </dl>
+    </script>
+	
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
+    <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+    <script>
+	
+	
+      (function() {
+	  var songA = [];
+	  var songU = []; // the songlist gotten through own playlist
+	  var songP = []; // the songlist gotten through public playlist
+       var pListID = [];
+        /**
+         * Obtains parameters from the hash of the URL
+         * @return Object
+         */
+        function getHashParams() {
+          var hashParams = {};
+          var e, r = /([^&;=]+)=?([^&;]*)/g,
+              q = window.location.hash.substring(1);
+          while ( e = r.exec(q)) {
+             hashParams[e[1]] = decodeURIComponent(e[2]);
+          }
+          return hashParams;
+        }
+        var userid = 'duummy';
+        var userProfileSource = document.getElementById('user-profile-template').innerHTML,
+            userProfileTemplate = Handlebars.compile(userProfileSource),
+            userProfilePlaceholder = document.getElementById('user-profile');
+
+        var oauthSource = document.getElementById('oauth-template').innerHTML,
+            oauthTemplate = Handlebars.compile(oauthSource),
+            oauthPlaceholder = document.getElementById('oauth');
+			
+	    var playlistSource = document.getElementById('playlist-template').innerHTML,
+            playlistTemplate = Handlebars.compile(playlistSource),
+            playlistPlaceholder = document.getElementById('playlist');
+
+        var params = getHashParams();
+
+        var access_token = params.access_token,
+            refresh_token = params.refresh_token,
+            error = params.error;
+
+        if (error) {
+          alert('There was an error during the authentication');
+        } else {
+          if (access_token) {
+            // render oauth info
+            oauthPlaceholder.innerHTML = oauthTemplate({
+              access_token: access_token,
+              refresh_token: refresh_token
+            });
+
+            $.ajax({
+                url: 'https://api.spotify.com/v1/me',
+                headers: {
+                  'Authorization': 'Bearer ' + access_token
+                },
+                success: function(response) {
+                  userProfilePlaceholder.innerHTML = userProfileTemplate(response);
+				  //var parsed = JSON.parse(response);
+                  userid = response.id;
+
+                  $('#login').hide();
+                  $('#loggedin').show();
+				  console.log('it gets here');
+				  
+                }
+            });
+    var section = document.querySelector('section.playlistlist');
+	var plistdrop = document.getElementById('plistdrop');
+	var requestURL = 'https://api.spotify.com/v1/me/playlists'
+	var request = new XMLHttpRequest();
+	request.open('GET', requestURL);
+	request.responseType = 'json';
+	request.setRequestHeader('Authorization', 'Bearer ' + access_token);
+    request.send();
+	request.onload = function() {
+      var pLists = request.response;
+      showLists(pLists);
+     }
+	 function showLists(jsonObj) {
+     var lists = jsonObj['items'];
+     
+     for (var i = 0; i < lists.length; i++) {
+     var myArticle = document.createElement('article');
+     var myH2 = document.createElement('h2');
+     var myPara1 = document.createElement('p');
+     var myPara2 = document.createElement('p');
+     var myPara3 = document.createElement('p');
+     var myList = document.createElement('ul');
+	 var meList = document.createElement('option');
+
+     myH2.textContent = lists[i].name;
+     myPara1.textContent = 'ID: ' + lists[i].id;
+     myPara2.textContent = 'Tracks: ' + lists[i].tracks.total;
+     myPara3.textContent = 'URI:' + lists[i].uri;
+	 meList.textContent = lists[i].name;
+	 pListID.push(lists[i].id); 
+
+     myArticle.appendChild(myH2);
+     myArticle.appendChild(myPara1);
+     myArticle.appendChild(myPara2);
+     myArticle.appendChild(myPara3);
+     myArticle.appendChild(myList);
+	 plistdrop.add(meList);
+
+     section.appendChild(myArticle);
+      }
+    }
+			$.ajax({
+                url: 'https://api.spotify.com/v1/me/playlists',
+                headers: {
+                  'Authorization': 'Bearer ' + access_token
+                },
+				json: true,
+                success: function(response) {
+                  playlistPlaceholder.innerHTML = playlistTemplate(response);
+
+                }
+            });
+			
+			
+          } else {
+              // render initial screen
+              $('#login').show();
+              $('#loggedin').hide();
+          }
+
+       document.getElementById('obtain-new-token').addEventListener('click', function() {
+            $.ajax({
+              url: '/refresh_token',
+              data: {
+                'refresh_token': refresh_token
+              }
+            }).done(function(data) {
+              access_token = data.access_token;
+              oauthPlaceholder.innerHTML = oauthTemplate({
+                access_token: access_token,
+                refresh_token: refresh_token
+              });
+            });
+          }, false);
+		  
+		    document.getElementById('get-users-playlists').addEventListener('click', function() {
+			getPlaylistAttributes(userid, pListID[plistdrop.selectedIndex]);
+			 document.getElementById('onemoment').innerHTML = 'One moment please...';
+			setTimeout(function(){
+			document.getElementById('process-user-data').disabled = false;
+			document.getElementById('onemoment').innerHTML = ' ';
+			},1500);
+	
+          }, false);
+		  document.getElementById('get-public-playlist').addEventListener('click', function() {
+		  getPlaylistAttributes(document.getElementById('otheruserid').value,document.getElementById('playlistid').value);
+		 document.getElementById('onemoment').innerHTML = 'One moment please...';
+		  setTimeout(function(){
+		  document.getElementById('process-public-data').disabled = false;
+		  document.getElementById('onemoment').innerHTML = ' ';
+		  },1500);
+		  }, false);
+		  
+		    document.getElementById('process-user-data').addEventListener('click', function() {
+		  isCertainlyUser(true);
+		  console.log(songA[0].id);
+		  console.log('u: ' + songU.length);
+		  document.getElementById('process-user-data').disabled = true;
+		  }, false);
+		  
+		   document.getElementById('process-public-data').addEventListener('click', function() {
+		  isCertainlyUser(false);
+		  console.log(songA[0].id);
+		  console.log('p: ' + songP.length);
+		  document.getElementById('process-public-data').disabled = true;
+		  }, false);
+		  
+
+        }
+		
+		//NOTE: the order playlists are returned is random
+		function getPlaylistAttributes(theuserid, theplaylistid){
+		songA = [];
+			var songID = [];
+			var noSongs = 0;
+			var srequestURL = 'https://api.spotify.com/v1/users/' + theuserid + '/playlists/' +  theplaylistid + '/tracks';
+	        var srequest = new XMLHttpRequest();
+            srequest.open('GET', srequestURL);
+	        srequest.responseType = 'json';
+	        srequest.setRequestHeader('Authorization', 'Bearer ' + access_token);
+            srequest.send();
+				srequest.onload = function() {
+            var sLists = srequest.response;
+            showSLists(sLists);
+            }
+	        function showSLists(jsonObj) {
+            var songs = jsonObj['items'];
+            noSongs = songs.length;
+            for (var i = 0; i < songs.length; i++) {
+	        songID.push(songs[i].track.id);        
+			
+			
+      }
+	   for (var j=0; j<noSongs; j++) (function(){
+			var arequestURL = 'https://api.spotify.com/v1/audio-features/' + songID[j];
+			var arequest = new XMLHttpRequest();
+			arequest.open('GET', arequestURL);
+	        arequest.responseType = 'json';
+	        arequest.setRequestHeader('Authorization', 'Bearer ' + access_token);
+            arequest.send();
+			arequest.onload = function() {
+            var aLists = arequest.response;
+            showALists(aLists);
+            }
+			function showALists(jsonObj) {
+            var atts = jsonObj;
+			var asong = new Song(
+			atts.id,
+			atts.danceability,
+			atts.energy,
+			atts.key,
+			atts.loudness,
+			atts.mode,
+			atts.speechiness,
+			atts.acousticness,
+			atts.instrumentalness,
+			atts.liveness,
+			atts.valence,
+			atts.tempo,
+			atts.duration_ms,
+			atts.time_signature);
+			songA.push(asong);
+			}})(j);
+    }      
+          }
+		  
+		  function displayArrayData(m){
+		 
+		  var arrlist = document.querySelector('section.arrlist');
+		  var rArticle = document.createElement('article');
+            var rH2 = document.createElement('h2');
+            var rPara1 = document.createElement('p');
+            var rPara2 = document.createElement('p');
+            var rPara3 = document.createElement('p');
+            var rList = document.createElement('ul');
+			rH2.textContent = songA[m].id;
+            rPara1.textContent = 'Speechiness: ' + songA[m].speechiness;
+            rPara2.textContent = 'Acousticness: ' + songA[m].acousticness;
+            rPara3.textContent = 'Instrumentalness:' + songA[m].instrumentalness;
+			rArticle.appendChild(rH2);
+            rArticle.appendChild(rPara1);
+            rArticle.appendChild(rPara2);
+            rArticle.appendChild(rPara3);
+            rArticle.appendChild(rList);
+			arrlist.appendChild(rArticle);
+			
+			
+			
+		  }
+		  
+		  function isCertainlyUser(b){
+		  console.log(b + ' ' + songA[0].id);
+		  if(b){songU = songA.slice();} else {songP = songA.slice();}
+		  console.log('P is ' + songP.length + ' and U is ' + songU.length + ' and A is ' + songA.length);}
+		  
+		  function Song(sid,sdan,seng,skey,sloud,smode,speech,sacous,sinst,slive,sval,stemp,sdur,stime) {
+	     this.id = sid;
+		 this.danceability = sdan;
+		 this.energy = seng;
+		 this.key = skey;
+		 this.loudness = sloud;
+		 this.mode = smode;
+		 this.speechiness = speech;
+		 this.acousticness = sacous;
+		 this.instrumentalness = sinst;
+		 this.liveness = slive;
+		 this.valence = sval;
+		 this.tempo = stemp;
+		 this.duration_ms = sdur;
+		 this.time_signature = stime;
+
+	}
+      })();
+    </script>
+	
+	<script>
+	
+	 
+	</script>
+	
+
+  </body>
+</html>
+
