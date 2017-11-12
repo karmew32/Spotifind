@@ -29,38 +29,34 @@
         </div>
 		<div id="playlist">
         </div>
-        <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button>
-		<button class="btn btn-default" id="get-users-playlists">Get the user's playlists</button>
+        <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button><br>
+		<button class="btn btn-default" id="get-users-playlists">Get songs from selected user playlist</button>
 		
 		<select id="plistdrop"> <!--Supplement an id here instead of using 'name'-->
 </select>
 
+
+
  <form>
-  Playlist ID:<br>
-  <input type="text" id="playlistid"><br>
-  User ID:<br>
-  <input type="text" id="otheruserid">
+    Enter playlist keyword:<br>
+  <input type="text" id="playlistkeyword">
+  <select id="slistdrop"> <!--Supplement an id here instead of using 'name'-->
+</select><br>
 </form>
 
 <text id="onemoment"> </text>
+<button class="btn btn-default" id="search-for-playlists">Search for playlists</button><br>
+<button class="btn btn-default" id="get-public-playlist" disabled>Find a public playlist</button><br>
+<br>
 
-<button class="btn btn-default" id="get-public-playlist">Find a public playlist</button>
-			  	<header>
-				<dt>Displferfewwefe</dt>
-	</header>
+<text>You cannot filter until you have selected your own playlist and one to filter it by!</text><br>
+<button class="btn btn-default" id="filter-playlists" disabled>Filter the playlist</button>
+
+
 	<section class="playlistlist">
 	</section>
 	
 
-	
-		<section class="songlist">
-	</section>
-	
-	<section class="attributelist">
-	</section>
-	
-		<section class="arrlist">
-	</section>
       </div>
 
     </div>
@@ -106,14 +102,19 @@
 
     <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
     <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+	 <script src="gulpfile.js"></script> 
     <script>
 	
 	
       (function() {
+	  var userFlag = false;
+	  var publicFlag = false;
 	  var songA = [];
 	  var songU = []; // the songlist gotten through own playlist
 	  var songP = []; // the songlist gotten through public playlist
        var pListID = [];
+	   var pubListID = [];
+	   var pubUserID = [];
         /**
          * Obtains parameters from the hash of the URL
          * @return Object
@@ -256,21 +257,48 @@
 			 isCertainlyUser(true);
 			//document.getElementById('process-user-data').disabled = false;
 			document.getElementById('get-users-playlists').disabled = false;
-			 document.getElementById('get-public-playlist').disabled = false;
 			document.getElementById('onemoment').innerHTML = ' ';
+			userFlag = true;
+			checkFlags();
 			},2000);
 	
           }, false);
 		  document.getElementById('get-public-playlist').addEventListener('click', function() {
-		  getPlaylistAttributes(document.getElementById('otheruserid').value,document.getElementById('playlistid').value);
+		  getPlaylistAttributes(pubUserID[slistdrop.selectedIndex],pubListID[slistdrop.selectedIndex]);
 		 document.getElementById('onemoment').innerHTML = 'One moment please...';
 		 			 document.getElementById('get-users-playlists').disabled = true;
 			 document.getElementById('get-public-playlist').disabled = true;
 		  setTimeout(function(){
 		  isCertainlyUser(false);
 		  document.getElementById('get-users-playlists').disabled = false;
-		  document.getElementById('get-public-playlist').disabled = false;
 		 // document.getElementById('process-public-data').disabled = false;
+		  document.getElementById('onemoment').innerHTML = ' ';
+		  publicFlag = true;
+		  checkFlags();
+		  },2000);
+		  }, false);
+		  
+		  document.getElementById('search-for-playlists').addEventListener('click', function() {
+		  findPublicPlaylist(document.getElementById('playlistkeyword').value);
+		  }, false);
+		  
+		  document.getElementById('filter-playlists').addEventListener('click', function() {
+		  
+		  for(var q = 0; q<filterArray.length; q++){
+		      console.log(q + ' is ' + typeof(filterArray[q]));
+		      if (typeof(filterArray[q].acousticness) != 'undefined') {} else { filterArray.splice(q,1);}
+		      console.log('acc of song ' + q + ': ' + filterArray[q].acousticness);
+			  }
+		  document.getElementById('onemoment').innerHTML = 'One moment please...';
+		  document.getElementById('filter-playlists').disabled = true;
+		  setTimeout(function(){
+		  averageSong();
+		  deviationVariance();
+		  sortyBits();
+		  console.log('input: ' + inputArray.length);
+		  console.log('filter: ' + filterArray.length);
+		  console.log('flag: ' + flagArray.length);
+		  console.log('output: ' + outputArray.length);
 		  document.getElementById('onemoment').innerHTML = ' ';
 		  },2000);
 		  }, false);
@@ -293,9 +321,14 @@
             var sLists = srequest.response;
             showSLists(sLists);
             }
+			
 	        function showSLists(jsonObj) {
             var songs = jsonObj['items'];
+			if (songs.length < 50){
             noSongs = songs.length;
+			}
+			else {
+			noSongs = 50;}
             for (var i = 0; i < songs.length; i++) {
 	        songID.push(songs[i].track.id);        
 			
@@ -314,7 +347,7 @@
             }
 			function showALists(jsonObj) {
             var atts = jsonObj;
-			var asong = new Song(
+			var asong = new CSong(
 			atts.id,
 			atts.danceability,
 			atts.energy,
@@ -334,13 +367,47 @@
     }      
           }
 		  
+		  function findPublicPlaylist(searchString){
+		  var slistdrop = document.getElementById('slistdrop');
+		  var prequestURL = 'https://api.spotify.com/v1/search?query="' + searchString + '"&type=playlist&limit=20';
+		  console.log(prequestURL);
+	        var prequest = new XMLHttpRequest();
+            prequest.open('GET', prequestURL);
+	        prequest.responseType = 'json';
+	        prequest.setRequestHeader('Authorization', 'Bearer ' + access_token);
+            prequest.send();
+				prequest.onload = function() {
+            var pubLists = prequest.response;
+			console.log(pubLists);
+            showPLists(pubLists);
+            }
+				 function showPLists(jsonObj) {
+     var publists = jsonObj.playlists.items;
+     for (var i = 0; i < publists.length; i++) {
+	 var mePubList = document.createElement('option');
+	 mePubList.textContent = publists[i].name;
+	 pubListID.push(publists[i].id); 
+     pubUserID.push(publists[i].owner.id);
+	 slistdrop.add(mePubList);
+
+      }
+	   document.getElementById('get-public-playlist').disabled = false;
+    }
+		  }
 		  
 		  function isCertainlyUser(b){
-		  console.log(b + ' ' + songA[0].id);
-		  if(b){songU = songA.slice();} else {songP = songA.slice();}
-		  console.log('P is ' + songP.length + ' and U is ' + songU.length + ' and A is ' + songA.length);}
+		  console.log(b + ' ' + songA[0].acousticness);
+		  if(b){songU = songA.slice(); filterArray = songU;} else {songP = songA.slice(); inputArray = songP;}
+		  console.log('P is ' + songP.length + ' and U is ' + inputArray.length + ' and A is ' + filterArray.length);
+		  }
 		  
-		  function Song(sid,sdan,seng,skey,sloud,smode,speech,sacous,sinst,slive,sval,stemp,sdur,stime) {
+		  function checkFlags(){
+		   if (userFlag && publicFlag) {
+		       document.getElementById('filter-playlists').disabled = false;
+		      }
+		  }
+		  
+		/*  function Song(sid,sdan,seng,skey,sloud,smode,speech,sacous,sinst,slive,sval,stemp,sdur,stime) {
 	     this.id = sid;
 		 this.danceability = sdan;
 		 this.energy = seng;
@@ -356,7 +423,7 @@
 		 this.duration_ms = sdur;
 		 this.time_signature = stime;
 
-	}
+	}*/
       })();
     </script>
 	
