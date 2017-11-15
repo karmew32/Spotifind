@@ -11,6 +11,7 @@ gulp.task('default', function () {
 });*/
 
 function CSong(sid,sdan,seng,skey,sloud,smode,speech,sacous,sinst,slive,sval,stemp,sdur,stime) {  //generic song object so JS won't scream, temp values
+this.uri = 'spotify:track:' + sid;
      this.id = sid;
 		 this.danceability = sdan;
 		 this.energy = seng;
@@ -245,7 +246,7 @@ function sortyBits() {
 	
     //clear flagArray if already in use
     if (flagArray.length != 0) {
-        flagArray.length = 0;
+        flagArray = [];
     }
 	
 	//set flagArray equal to inputArray's length
@@ -368,7 +369,7 @@ function sortyBits() {
     //now that the flags have been set
 	//clear outputArray if it was used
 	if (outputArray.length!=0){
-		outputArray.length=0;
+		outputArray = [];
 	}
 	
     for (var i = 11; i >= 0; i--) {

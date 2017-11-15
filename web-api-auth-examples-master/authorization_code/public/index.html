@@ -56,8 +56,29 @@
 	<section class="playlistlist">
 	</section>
 	
+	
+	
 
       </div>
+	  
+	  <div id="filteroptions" style="display:none">
+	  <h1>The filtered songs are listed below.</h1>
+	  <text> Enter a name for your playlist then click "Save playlist" if you want to save the results as a playlist <br> 
+	  or "No" if you want to try again. Also decide if you want to make it public or private.</text><br>
+	  <input type="text" id="playlistname"><br>
+	  <button class="btn btn-default" id="save-playlist">Save playlist</button><br>
+	  
+	   <input type="radio" id="publicChoice"
+     name="pubpri" value="public" checked>
+    <label for="publicChoice">Public</label>
+    <input type="radio" id="privateChoice"
+     name="pubpri" value="private">
+    <label for="privateChoice">Private</label>
+	<br>
+	  <button class="btn btn-default" id="try-again">Try again</button><br>
+	  <section id="filterlist" class="filteredlist">
+	</section>
+	  </div>
 
     </div>
 	
@@ -107,6 +128,7 @@
 	
 	
       (function() {
+	  var radios = document.getElementsByName('pubpri');
 	  var userFlag = false;
 	  var publicFlag = false;
 	  var songA = [];
@@ -249,6 +271,7 @@
           }, false);
 		  
 		    document.getElementById('get-users-playlists').addEventListener('click', function() {
+			songU = [];
 			getPlaylistAttributes(userid, pListID[plistdrop.selectedIndex]);
 			 document.getElementById('onemoment').innerHTML = 'One moment please...';
 			 document.getElementById('get-users-playlists').disabled = true;
@@ -264,6 +287,7 @@
 	
           }, false);
 		  document.getElementById('get-public-playlist').addEventListener('click', function() {
+		  songP = [];
 		  getPlaylistAttributes(pubUserID[slistdrop.selectedIndex],pubListID[slistdrop.selectedIndex]);
 		 document.getElementById('onemoment').innerHTML = 'One moment please...';
 		 			 document.getElementById('get-users-playlists').disabled = true;
@@ -285,9 +309,8 @@
 		  document.getElementById('filter-playlists').addEventListener('click', function() {
 		  
 		  for(var q = 0; q<filterArray.length; q++){
-		      console.log(q + ' is ' + typeof(filterArray[q]));
-		      if (typeof(filterArray[q].acousticness) != 'undefined') {} else { filterArray.splice(q,1);}
 		      console.log('acc of song ' + q + ': ' + filterArray[q].acousticness);
+			  console.log('acc of song ' + q + ': ' + filterArray[q].loudness);
 			  }
 		  document.getElementById('onemoment').innerHTML = 'One moment please...';
 		  document.getElementById('filter-playlists').disabled = true;
@@ -300,12 +323,95 @@
 		  console.log('flag: ' + flagArray.length);
 		  console.log('output: ' + outputArray.length);
 		  document.getElementById('onemoment').innerHTML = ' ';
+		  showFilteredPlaylist();
+		  document.getElementById('loggedin').style.display = 'none';
+		  document.getElementById('filteroptions').style.display = 'block';
 		  },2000);
+
 		  }, false);
 		  
+		   document.getElementById('try-again').addEventListener('click', function() {
+		   resetSpotifind();
+		  }, false);
+		  
+		     document.getElementById('save-playlist').addEventListener('click', function() {
+			 var pName = document.getElementById('playlistname').value;
+			 if (pName.length == 0){
+			     pName = 'SPOTIFIND PLAYLIST';}
+			 savePlaylist(pName);
+		   resetSpotifind();
+		  }, false);
 
         }
+		function savePlaylist(playlistName){
+		    var newListID;
+		    var crequestURL = 'https://api.spotify.com/v1/users/' + userid + '/playlists';
+			var crequest = new XMLHttpRequest();
+			crequest.open('POST', crequestURL);
+	        crequest.responseType = 'json';
+	        crequest.setRequestHeader('Authorization', 'Bearer ' + access_token);
+			crequest.setRequestHeader('Content-Type', 'application/json');
+			var data = JSON.stringify({ 'name' : playlistName, 'public': radios[0].checked });//radios[0] is the public one; if not checked, must be private
+            crequest.send(data);
+			crequest.onload = function() {
+            var cList = crequest.response;
+            console.log(cList);
+			newListID = cList.id;
+			buildPlaylist();
+            }
+			function buildPlaylist(){
+			var outputURIs = [];
+			for (var b=0;b<outputArray.length;b++)(function(){
+			   outputURIs.push(outputArray[b].uri);
+			    })(b);
+			var brequestURL = 'https://api.spotify.com/v1/users/' + userid + '/playlists/' + newListID + '/tracks';
+			var brequest = new XMLHttpRequest();
+			brequest.open('POST', brequestURL);
+	        brequest.responseType = 'json';
+	        brequest.setRequestHeader('Authorization', 'Bearer ' + access_token);
+			brequest.setRequestHeader('Content-Type', 'application/json');
+			var data = JSON.stringify({ 'uris': outputURIs });
+            brequest.send(data);
+			brequest.onload = function() {
+            console.log('adding a song');
+            }
+			}
+			console.log("userid is" + userid);
+			console.log("playlist name is" + playlistName);
+            console.log("crequest url is" + crequestURL);
+			/*var crequestURL = 'https://api.spotify.com/v1/users/' + userid + '/playlists';
+						console.log("crequest url is" + crequestURL);
+			$.ajax(crequestURL, {
+		method: 'POST',
+		data: 
+      JSON.stringify({'name': playlistName, 'public': false})
+   ,
 		
+		dataType: 'json',
+		headers: {
+			'Authorization': 'Bearer ' + access_token,
+			'Content-Type': 'application/json'
+		},
+		success: function() {
+			console.log('create playlist response');
+		},
+		error: function(e) {
+			console.log('error thingy' + e);
+		}
+	});*/
+		}
+		function resetSpotifind(){
+		var selectbox = document.getElementById('slistdrop');
+           for(var i = selectbox.options.length - 1 ; i >= 0 ; i--)
+           {
+                 selectbox.remove(i);
+           }
+		   document.getElementById('filterlist').innerHTML = '';
+		  document.getElementById('loggedin').style.display = 'block';
+		  document.getElementById('filteroptions').style.display = 'none';
+		  userFlag = false;
+		  publicFlag = false;
+		}
 		//NOTE: the order playlists are returned is random
 		function getPlaylistAttributes(theuserid, theplaylistid){
 		songA = [];
@@ -393,6 +499,50 @@
       }
 	   document.getElementById('get-public-playlist').disabled = false;
     }
+		  }
+		  
+		  function showFilteredPlaylist(){
+		  var fsection = document.querySelector('section.filteredlist');
+		        for (var m=0; m<outputArray.length; m++) (function(){
+			var frequestURL = 'https://api.spotify.com/v1/tracks/' + outputArray[m].id;
+			var frequest = new XMLHttpRequest();
+			frequest.open('GET', frequestURL);
+	        frequest.responseType = 'json';
+	        frequest.setRequestHeader('Authorization', 'Bearer ' + access_token);
+            frequest.send();
+			frequest.onload = function() {
+            var fLists = frequest.response;
+            showFLists(fLists);
+            }
+			function showFLists(jsonObj) {
+            var fsongs = jsonObj;
+			var fArticle = document.createElement('article');
+            var fH2 = document.createElement('h2');
+            var fPara1 = document.createElement('p');
+            var fPara2 = document.createElement('p');
+            var fPara3 = document.createElement('p');
+            var fList = document.createElement('ul');
+            var artList = '';
+			    for (var n=0;n<fsongs.artists.length;n++){
+				    artList += fsongs.artists[n].name;
+					if (n<fsongs.artists.length - 1){
+					    artList += '/';
+					}
+				
+				}
+            fH2.textContent = fsongs.name;
+            fPara2.textContent = 'Artist(s): ' + artList;
+			fPara1.textContent = 'Album: ' + fsongs.album.name;
+            fPara3.textContent = 'Preview Link:' + fsongs.preview_url;
+
+            fArticle.appendChild(fH2);
+            fArticle.appendChild(fPara1);
+            fArticle.appendChild(fPara2);
+            fArticle.appendChild(fPara3);
+            fArticle.appendChild(fList);
+
+            fsection.appendChild(fArticle);
+			}})(m);
 		  }
 		  
 		  function isCertainlyUser(b){
