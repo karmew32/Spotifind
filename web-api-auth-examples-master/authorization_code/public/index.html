@@ -132,8 +132,6 @@
 	  var userFlag = false;
 	  var publicFlag = false;
 	  var songA = [];
-	  var songU = []; // the songlist gotten through own playlist
-	  var songP = []; // the songlist gotten through public playlist
        var pListID = [];
 	   var pubListID = [];
 	   var pubUserID = [];
@@ -186,7 +184,6 @@
                 },
                 success: function(response) {
                   userProfilePlaceholder.innerHTML = userProfileTemplate(response);
-				  //var parsed = JSON.parse(response);
                   userid = response.id;
 
                   $('#login').hide();
@@ -198,15 +195,18 @@
     var section = document.querySelector('section.playlistlist');
 	var plistdrop = document.getElementById('plistdrop');
 	var requestURL = 'https://api.spotify.com/v1/me/playlists'
-	var request = new XMLHttpRequest();
-	request.open('GET', requestURL);
-	request.responseType = 'json';
-	request.setRequestHeader('Authorization', 'Bearer ' + access_token);
-    request.send();
-	request.onload = function() {
-      var pLists = request.response;
-      showLists(pLists);
-     }
+	$.ajax(requestURL, {
+		           method: 'GET',
+		          headers: {
+			                'Authorization': 'Bearer ' + access_token
+		                     },
+		          success: function(response) {
+				             showLists(response);
+		                     },
+		          error: function() {
+			                console.log('error retrieving user lists');
+		                     }
+	                       });
 	 function showLists(jsonObj) {
      var lists = jsonObj['items'];
      
@@ -271,14 +271,13 @@
           }, false);
 		  
 		    document.getElementById('get-users-playlists').addEventListener('click', function() {
-			songU = [];
+			//songU = [];
 			getPlaylistAttributes(userid, pListID[plistdrop.selectedIndex]);
 			 document.getElementById('onemoment').innerHTML = 'One moment please...';
 			 document.getElementById('get-users-playlists').disabled = true;
 			 document.getElementById('get-public-playlist').disabled = true;
 			setTimeout(function(){
 			 isCertainlyUser(true);
-			//document.getElementById('process-user-data').disabled = false;
 			document.getElementById('get-users-playlists').disabled = false;
 			document.getElementById('onemoment').innerHTML = ' ';
 			userFlag = true;
@@ -287,7 +286,7 @@
 	
           }, false);
 		  document.getElementById('get-public-playlist').addEventListener('click', function() {
-		  songP = [];
+		  //songP = [];
 		  getPlaylistAttributes(pubUserID[slistdrop.selectedIndex],pubListID[slistdrop.selectedIndex]);
 		 document.getElementById('onemoment').innerHTML = 'One moment please...';
 		 			 document.getElementById('get-users-playlists').disabled = true;
@@ -295,7 +294,6 @@
 		  setTimeout(function(){
 		  isCertainlyUser(false);
 		  document.getElementById('get-users-playlists').disabled = false;
-		 // document.getElementById('process-public-data').disabled = false;
 		  document.getElementById('onemoment').innerHTML = ' ';
 		  publicFlag = true;
 		  checkFlags();
@@ -308,20 +306,12 @@
 		  
 		  document.getElementById('filter-playlists').addEventListener('click', function() {
 		  
-		  for(var q = 0; q<filterArray.length; q++){
-		      console.log('acc of song ' + q + ': ' + filterArray[q].acousticness);
-			  console.log('acc of song ' + q + ': ' + filterArray[q].loudness);
-			  }
 		  document.getElementById('onemoment').innerHTML = 'One moment please...';
 		  document.getElementById('filter-playlists').disabled = true;
 		  setTimeout(function(){
 		  averageSong();
 		  deviationVariance();
 		  sortyBits();
-		  console.log('input: ' + inputArray.length);
-		  console.log('filter: ' + filterArray.length);
-		  console.log('flag: ' + flagArray.length);
-		  console.log('output: ' + outputArray.length);
 		  document.getElementById('onemoment').innerHTML = ' ';
 		  showFilteredPlaylist();
 		  document.getElementById('loggedin').style.display = 'none';
@@ -345,60 +335,50 @@
         }
 		function savePlaylist(playlistName){
 		    var newListID;
-		    var crequestURL = 'https://api.spotify.com/v1/users/' + userid + '/playlists';
-			var crequest = new XMLHttpRequest();
-			crequest.open('POST', crequestURL);
-	        crequest.responseType = 'json';
-	        crequest.setRequestHeader('Authorization', 'Bearer ' + access_token);
-			crequest.setRequestHeader('Content-Type', 'application/json');
-			var data = JSON.stringify({ 'name' : playlistName, 'public': radios[0].checked });//radios[0] is the public one; if not checked, must be private
-            crequest.send(data);
-			crequest.onload = function() {
-            var cList = crequest.response;
-            console.log(cList);
-			newListID = cList.id;
-			buildPlaylist();
-            }
+						var crequestURL = 'https://api.spotify.com/v1/users/' + userid + '/playlists';
+			$.ajax(crequestURL, {
+		           method: 'POST',
+		          data: 
+                      JSON.stringify({'name': playlistName, 'public': radios[0].checked}),
+		          dataType: 'json',
+		          headers: {
+			                'Authorization': 'Bearer ' + access_token,
+			                'Content-Type': 'application/json'
+		                     },
+		          success: function(response) {
+					         newListID = response.id;
+							 buildPlaylist();
+			                 console.log('create playlist response');
+		                     },
+		          error: function() {
+			                console.log('error saving playlist');
+		                     }
+	                       });
+
 			function buildPlaylist(){
 			var outputURIs = [];
 			for (var b=0;b<outputArray.length;b++)(function(){
 			   outputURIs.push(outputArray[b].uri);
 			    })(b);
 			var brequestURL = 'https://api.spotify.com/v1/users/' + userid + '/playlists/' + newListID + '/tracks';
-			var brequest = new XMLHttpRequest();
-			brequest.open('POST', brequestURL);
-	        brequest.responseType = 'json';
-	        brequest.setRequestHeader('Authorization', 'Bearer ' + access_token);
-			brequest.setRequestHeader('Content-Type', 'application/json');
-			var data = JSON.stringify({ 'uris': outputURIs });
-            brequest.send(data);
-			brequest.onload = function() {
-            console.log('adding a song');
-            }
+			$.ajax(brequestURL, {
+		           method: 'POST',
+		          data: 
+                      JSON.stringify({'uris': outputURIs}),
+		          dataType: 'json',
+		          headers: {
+			                'Authorization': 'Bearer ' + access_token,
+			                'Content-Type': 'application/json'
+		                     },
+		          success: function(response) {
+			                 console.log('songs successfully added');
+		                     },
+		          error: function() {
+			                console.log('error adding the songs to playlist');
+		                     }
+	                       });
 			}
-			console.log("userid is" + userid);
-			console.log("playlist name is" + playlistName);
-            console.log("crequest url is" + crequestURL);
-			/*var crequestURL = 'https://api.spotify.com/v1/users/' + userid + '/playlists';
-						console.log("crequest url is" + crequestURL);
-			$.ajax(crequestURL, {
-		method: 'POST',
-		data: 
-      JSON.stringify({'name': playlistName, 'public': false})
-   ,
-		
-		dataType: 'json',
-		headers: {
-			'Authorization': 'Bearer ' + access_token,
-			'Content-Type': 'application/json'
-		},
-		success: function() {
-			console.log('create playlist response');
-		},
-		error: function(e) {
-			console.log('error thingy' + e);
-		}
-	});*/
+
 		}
 		function resetSpotifind(){
 		var selectbox = document.getElementById('slistdrop');
@@ -416,41 +396,39 @@
 		function getPlaylistAttributes(theuserid, theplaylistid){
 		songA = [];
 			var songID = [];
-			var noSongs = 0;
 			var srequestURL = 'https://api.spotify.com/v1/users/' + theuserid + '/playlists/' +  theplaylistid + '/tracks';
-	        var srequest = new XMLHttpRequest();
-            srequest.open('GET', srequestURL);
-	        srequest.responseType = 'json';
-	        srequest.setRequestHeader('Authorization', 'Bearer ' + access_token);
-            srequest.send();
-				srequest.onload = function() {
-            var sLists = srequest.response;
-            showSLists(sLists);
-            }
+					$.ajax(srequestURL, {
+		           method: 'GET',
+		          headers: {
+			                'Authorization': 'Bearer ' + access_token
+		                     },
+		          success: function(response) {
+				             showSLists(response);
+		                     },
+		          error: function() {
+			                console.log('error gettings songs from playlist');
+		                     }
+	                       });
 			
 	        function showSLists(jsonObj) {
             var songs = jsonObj['items'];
-			if (songs.length < 50){
-            noSongs = songs.length;
-			}
-			else {
-			noSongs = 50;}
             for (var i = 0; i < songs.length; i++) {
 	        songID.push(songs[i].track.id);        
-			
-			
       }
-	   for (var j=0; j<noSongs; j++) (function(){
+	   for (var j=0; j<songs.length; j++) (function(){
 			var arequestURL = 'https://api.spotify.com/v1/audio-features/' + songID[j];
-			var arequest = new XMLHttpRequest();
-			arequest.open('GET', arequestURL);
-	        arequest.responseType = 'json';
-	        arequest.setRequestHeader('Authorization', 'Bearer ' + access_token);
-            arequest.send();
-			arequest.onload = function() {
-            var aLists = arequest.response;
-            showALists(aLists);
-            }
+				$.ajax(arequestURL, {
+		           method: 'GET',
+		          headers: {
+			                'Authorization': 'Bearer ' + access_token
+		                     },
+		          success: function(response) {
+				             showALists(response);
+		                     },
+		          error: function() {
+			                console.log('error retrieving song attributes');
+		                     }
+	                       });
 			function showALists(jsonObj) {
             var atts = jsonObj;
 			var asong = new CSong(
@@ -476,17 +454,18 @@
 		  function findPublicPlaylist(searchString){
 		  var slistdrop = document.getElementById('slistdrop');
 		  var prequestURL = 'https://api.spotify.com/v1/search?query="' + searchString + '"&type=playlist&limit=20';
-		  console.log(prequestURL);
-	        var prequest = new XMLHttpRequest();
-            prequest.open('GET', prequestURL);
-	        prequest.responseType = 'json';
-	        prequest.setRequestHeader('Authorization', 'Bearer ' + access_token);
-            prequest.send();
-				prequest.onload = function() {
-            var pubLists = prequest.response;
-			console.log(pubLists);
-            showPLists(pubLists);
-            }
+		  $.ajax(prequestURL, {
+		           method: 'GET',
+		          headers: {
+			                'Authorization': 'Bearer ' + access_token
+		                     },
+		          success: function(response) {
+				             showPLists(response);
+		                     },
+		          error: function() {
+			                console.log('error retrieving public playlists');
+		                     }
+	                       });
 				 function showPLists(jsonObj) {
      var publists = jsonObj.playlists.items;
      for (var i = 0; i < publists.length; i++) {
@@ -505,15 +484,18 @@
 		  var fsection = document.querySelector('section.filteredlist');
 		        for (var m=0; m<outputArray.length; m++) (function(){
 			var frequestURL = 'https://api.spotify.com/v1/tracks/' + outputArray[m].id;
-			var frequest = new XMLHttpRequest();
-			frequest.open('GET', frequestURL);
-	        frequest.responseType = 'json';
-	        frequest.setRequestHeader('Authorization', 'Bearer ' + access_token);
-            frequest.send();
-			frequest.onload = function() {
-            var fLists = frequest.response;
-            showFLists(fLists);
-            }
+			$.ajax(frequestURL, {
+		           method: 'GET',
+		          headers: {
+			                'Authorization': 'Bearer ' + access_token
+		                     },
+		          success: function(response) {
+				             showFLists(response);
+		                     },
+		          error: function() {
+			                console.log('error showing filtered playlist');
+		                     }
+	                       });
 			function showFLists(jsonObj) {
             var fsongs = jsonObj;
 			var fArticle = document.createElement('article');
@@ -546,9 +528,8 @@
 		  }
 		  
 		  function isCertainlyUser(b){
-		  console.log(b + ' ' + songA[0].acousticness);
-		  if(b){songU = songA.slice(); filterArray = songU;} else {songP = songA.slice(); inputArray = songP;}
-		  console.log('P is ' + songP.length + ' and U is ' + inputArray.length + ' and A is ' + filterArray.length);
+		  if(b){filterArray = songA.slice();} else {inputArray = songA.slice();}
+		  console.log('P is ' + inputArray.length + ' and U is ' + filterArray.length + ' and A is ' + songA.length);
 		  }
 		  
 		  function checkFlags(){
@@ -557,23 +538,6 @@
 		      }
 		  }
 		  
-		/*  function Song(sid,sdan,seng,skey,sloud,smode,speech,sacous,sinst,slive,sval,stemp,sdur,stime) {
-	     this.id = sid;
-		 this.danceability = sdan;
-		 this.energy = seng;
-		 this.key = skey;
-		 this.loudness = sloud;
-		 this.mode = smode;
-		 this.speechiness = speech;
-		 this.acousticness = sacous;
-		 this.instrumentalness = sinst;
-		 this.liveness = slive;
-		 this.valence = sval;
-		 this.tempo = stemp;
-		 this.duration_ms = sdur;
-		 this.time_signature = stime;
-
-	}*/
       })();
     </script>
 	
