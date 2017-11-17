@@ -313,9 +313,9 @@
 		  deviationVariance();
 		  sortyBits();
 		  document.getElementById('onemoment').innerHTML = ' ';
-		  showFilteredPlaylist();
+		  setTimeout(function(){showFilteredPlaylist();
 		  document.getElementById('loggedin').style.display = 'none';
-		  document.getElementById('filteroptions').style.display = 'block';
+		  document.getElementById('filteroptions').style.display = 'block';},500);
 		  },2000);
 
 		  }, false);

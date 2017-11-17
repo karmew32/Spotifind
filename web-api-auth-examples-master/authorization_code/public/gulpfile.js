@@ -131,43 +131,43 @@ function deviationVariance() {
         varianceTemp = varianceTemp * varianceTemp;
         varianceSong.acousticness += varianceTemp;
 
-        varianceTemp = filterArray[i].acousticness - avgSong.danceability;
+        varianceTemp = filterArray[i].danceability - avgSong.danceability;
         varianceTemp = varianceTemp * varianceTemp;
         varianceSong.danceability += varianceTemp;
 
-        varianceTemp = filterArray[i].acousticness - avgSong.energy;
+        varianceTemp = filterArray[i].energy - avgSong.energy;
         varianceTemp = varianceTemp * varianceTemp;
         varianceSong.energy += varianceTemp;
 
-        varianceTemp = filterArray[i].acousticness - avgSong.instrumentalness;
+        varianceTemp = filterArray[i].instrumentalness - avgSong.instrumentalness;
         varianceTemp = varianceTemp * varianceTemp;
         varianceSong.instrumentalness += varianceTemp;
 
-        varianceTemp = filterArray[i].acousticness - avgSong.liveness;
+        varianceTemp = filterArray[i].liveness - avgSong.liveness;
         varianceTemp = varianceTemp * varianceTemp;
         varianceSong.liveness += varianceTemp;
 
-        varianceTemp = filterArray[i].acousticness - avgSong.loudness;
+        varianceTemp = filterArray[i].loudness - avgSong.loudness;
         varianceTemp = varianceTemp * varianceTemp;
         varianceSong.loudness += varianceTemp;
 
         //mode is either 0 or 1, therefore outliers are impossible and therefore ignored
         varianceSong.mode = avgSong.mode;
 
-        varianceTemp = filterArray[i].acousticness - avgSong.speechiness;
+        varianceTemp = filterArray[i].speechiness - avgSong.speechiness;
         varianceTemp = varianceTemp * varianceTemp;
         varianceSong.speechiness += varianceTemp;
 
-        varianceTemp = filterArray[i].acousticness - avgSong.tempo;
+        varianceTemp = filterArray[i].tempo - avgSong.tempo;
         varianceTemp = varianceTemp * varianceTemp;
         varianceSong.tempo += varianceTemp;
         //note, tempo is integer value
 
-        varianceTemp = filterArray[i].acousticness - avgSong.time_signature;
+        varianceTemp = filterArray[i].time_signature - avgSong.time_signature;
         varianceTemp = varianceTemp * varianceTemp;
         varianceSong.time_signature += varianceTemp;
 
-        varianceTemp = filterArray[i].acousticness - avgSong.valence;
+        varianceTemp = filterArray[i].valence - avgSong.valence;
         varianceTemp = varianceTemp * varianceTemp;
         varianceSong.valence += varianceTemp;
     }
@@ -200,39 +200,53 @@ function deviationVariance() {
     deviationSong.tempo = 2 * Math.sqrt(varianceSong.tempo);
     deviationSong.time_signature = 2 * Math.sqrt(varianceSong.time_signature);
     deviationSong.valence = 2 * Math.sqrt(varianceSong.valence);
-
+    /*for (var i = 0; i < filterArray.length; i++) {
+		console.log('song ' + i + ':');
+		console.dir(filterArray[i]);
+	}*/
     //clean filterArray so that outlier songs are removed
     for (var i = 0; i < filterArray.length; i++) {
+		console.log('i is ' + i + ' and filterLength is ' + filterArray.length);
         if (filterArray[i].acousticness > (avgSong.acousticness + deviationSong.acousticness) || filterArray[i].acousticness < (avgSong.acousticness - deviationSong.acousticness)) {
             filterArray.splice(i, 1);  //at location i of array, removes 1 object
+			if (i >= filterArray.length) {break;}
         }
         if (filterArray[i].danceability > (avgSong.danceability + deviationSong.danceability) || filterArray[i].danceability < (avgSong.danceability - deviationSong.danceability)) {
             filterArray.splice(i, 1);  //at location i of array, removes 1 object
+			if (i >= filterArray.length) {break;}
         }
         if (filterArray[i].energy > (avgSong.energy + deviationSong.energy) || filterArray[i].energy < (avgSong.energy - deviationSong.energy)) {
             filterArray.splice(i, 1);  //at location i of array, removes 1 object
+			if (i >= filterArray.length) {break;}
         }
         if (filterArray[i].instrumentalness > (avgSong.instrumentalness + deviationSong.instrumentalness) || filterArray[i].instrumentalness < (avgSong.instrumentalness - deviationSong.instrumentalness)) {
             filterArray.splice(i, 1);  //at location i of array, removes 1 object
+			if (i >= filterArray.length) {break;}
         }
         if (filterArray[i].liveness > (avgSong.liveness + deviationSong.liveness) || filterArray[i].liveness < (avgSong.liveness - deviationSong.liveness)) {
             filterArray.splice(i, 1);  //at location i of array, removes 1 object
+			if (i >= filterArray.length) {break;}
         }
         if (filterArray[i].loudness > (avgSong.loudness + deviationSong.loudness) || filterArray[i].loudness < (avgSong.loudness - deviationSong.loudness)) {
             filterArray.splice(i, 1);  //at location i of array, removes 1 object
+			if (i >= filterArray.length) {break;}
         }
         //we're not cutting things for not matching mode, so no mode check is implemented
         if (filterArray[i].speechiness > (avgSong.speechiness + deviationSong.speechiness) || filterArray[i].speechiness < (avgSong.speechiness - deviationSong.speechiness)) {
             filterArray.splice(i, 1);  //at location i of array, removes 1 object
+			if (i >= filterArray.length) {break;}
         }
         if (filterArray[i].tempo > (avgSong.tempo + deviationSong.tempo) || filterArray[i].tempo < (avgSong.tempo - deviationSong.tempo)) {
             filterArray.splice(i, 1);  //at location i of array, removes 1 object
+			if (i >= filterArray.length) {break;}
         }
         if (filterArray[i].time_signature > (avgSong.time_signature + deviationSong.time_signature) || filterArray[i].time_signature < (avgSong.time_signature - deviationSong.time_signature)) {
             filterArray.splice(i, 1);  //at location i of array, removes 1 object
+			if (i >= filterArray.length) {break;}
         }
         if (filterArray[i].valence > (avgSong.valence + deviationSong.valence) || filterArray[i].valence < (avgSong.valence - deviationSong.valence)) {
             filterArray.splice(i, 1);  //at location i of array, removes 1 object
+			if (i >= filterArray.length) {break;}
         }
     }
     //recalculate average
@@ -325,7 +339,7 @@ function sortyBits() {
 
         //once all similarity flags have been set for this entry, increment the
         //corresponding flag counter
-		console.log('swich equals ' + flagArray[i]);
+		//console.log('swich equals ' + flagArray[i]);
         switch (flagArray[i]) {
             case 0:
                 flag0 += 1;
@@ -373,7 +387,7 @@ function sortyBits() {
 	}
 	
     for (var i = 11; i >= 0; i--) {
-        console.log('flag11= ' + flag11);
+       /* console.log('flag11= ' + flag11);
 		console.log('flag10= ' + flag10);
 		console.log('flag9= ' + flag9);
 		console.log('flag8= ' + flag8);
@@ -384,7 +398,7 @@ function sortyBits() {
 		console.log('flag3= ' + flag3);
 		console.log('flag2= ' + flag2);
 		console.log('flag1= ' + flag1);
-		console.log('flag0= ' + flag0);
+		console.log('flag0= ' + flag0);*/
         switch (i) {
             case 11:
                 while (flag11 > 0) {
