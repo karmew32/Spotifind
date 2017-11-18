@@ -72,7 +72,6 @@ function averageSong() {
 	avgSong.time_signature=0;
 	avgSong.valence=0;
 	
-    console.log('filterray ac is ' + filterArray[0].acousticness);
     //populate avgSong with sums
     for (var i = 0; i < filterArray.length; i++) {
         avgSong.acousticness += filterArray[i].acousticness;

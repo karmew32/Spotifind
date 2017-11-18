@@ -1,8 +1,11 @@
 <!doctype html>
 <html>
   <head>
-    <title>Example of the Authorization Code flow with Spotify</title>
+    <title>Spotifind</title>
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <link href='https://fonts.googleapis.com/css?family=Lobster' rel='stylesheet' type='text/css'>
+	<link href='https://fonts.googleapis.com/css?family=Lato:400,700,900' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" type="text/css" href="css.css">
     <style type="text/css">
       #login, #loggedin {
         display: none;
@@ -12,15 +15,16 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         width: 500px;
-      }
     </style>
   </head>
 
-  <body>
+  <body class="overlay">
     <div class="container">
       <div id="login">
-        <h1>This is an example of the Authorization Code flow</h1>
-        <a href="/login" class="btn btn-primary">Log in with Spotify</a>
+      	<div align="center">
+        	<h1>Welcome to Spotifind</h1>
+        	<a href="/login" class="btn btn-success btn-lg">Log in with Spotify</a>
+    	</div>
       </div>
       <div id="loggedin">
         <div id="user-profile">
@@ -29,28 +33,27 @@
         </div>
 		<div id="playlist">
         </div>
-        <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button><br>
-		<button class="btn btn-default" id="get-users-playlists">Get songs from selected user playlist</button>
+        <br>
+		<center><button class="btn btn-success btn-sm" id="get-users-playlists">Get songs from selected user playlist</button>&nbsp;&nbsp;
 		
 		<select id="plistdrop"> <!--Supplement an id here instead of using 'name'-->
 </select>
 
 
-
+<br><br>
  <form>
-    Enter playlist keyword:<br>
-  <input type="text" id="playlistkeyword">
-  <select id="slistdrop"> <!--Supplement an id here instead of using 'name'-->
-</select><br>
+    <p>Enter playlist keyword:</p><br>
+  <input type="text" id="playlistkeyword" style="color:black;">
+  <select id="slistdrop"  style="color:black;"> <!--Supplement an id here instead of using 'name'-->
+</select><br><br>
 </form>
 
-<text id="onemoment"> </text>
-<button class="btn btn-default" id="search-for-playlists">Search for playlists</button><br>
-<button class="btn btn-default" id="get-public-playlist" disabled>Find a public playlist</button><br>
-<br>
+<text id="onemoment"></text>
+<button class="btn btn-success btn-sm" id="search-for-playlists">Search for playlists</button><br><br>
+<button class="btn btn-success btn-sm" id="get-public-playlist" disabled>Get songs from selected playlist</button><br><br>
 
-<text>You cannot filter until you have selected your own playlist and one to filter it by!</text><br>
-<button class="btn btn-default" id="filter-playlists" disabled>Filter the playlist</button>
+<p>You cannot filter until you have selected your own playlist and one to filter it by!</p><br>
+<button class="btn btn-success btn-sm" id="filter-playlists" disabled>Filter the playlist</button><br><br><br><br>
 
 
 	<section class="playlistlist">
@@ -62,62 +65,41 @@
       </div>
 	  
 	  <div id="filteroptions" style="display:none">
-	  <h1>The filtered songs are listed below.</h1>
-	  <text> Enter a name for your playlist then click "Save playlist" if you want to save the results as a playlist <br> 
-	  or "No" if you want to try again. Also decide if you want to make it public or private.</text><br>
-	  <input type="text" id="playlistname"><br>
-	  <button class="btn btn-default" id="save-playlist">Save playlist</button><br>
+	  <h1>The filtered songs are listed below.</h1><br><br>
+	  <p> Enter a name for your playlist then click "Save playlist"</p><br>
+	  <center><input type="text" id="playlistname"><br><br>
+	  <button class="btn btn-success" id="save-playlist">Save playlist</button><br><br>
 	  
 	   <input type="radio" id="publicChoice"
      name="pubpri" value="public" checked>
-    <label for="publicChoice">Public</label>
+    <label for="publicChoice"><p>Public</p></label>&nbsp;&nbsp;
     <input type="radio" id="privateChoice"
      name="pubpri" value="private">
-    <label for="privateChoice">Private</label>
+    <label for="privateChoice"><p>Private</p></label>
 	<br>
-	  <button class="btn btn-default" id="try-again">Try again</button><br>
+	  <button class="btn btn-success" id="try-again">Try again</button><br></center>
 	  <section id="filterlist" class="filteredlist">
 	</section>
 	  </div>
 
-    </div>
+    </div></center>
 	
 
 
     <script id="user-profile-template" type="text/x-handlebars-template">
-      <h1>Logged in as {{display_name}}</h1>
-      <div class="media">
-        <div class="pull-left">
-          <img class="media-object" width="150" src="{{images.0.url}}" />
-        </div>
-        <div class="media-body">
-          <dl class="dl-horizontal">
-            <dt>Display name</dt><dd class="clearfix">{{display_name}}</dd>
-            <dt>Id</dt><dd>{{id}}</dd>
-            <dt>Email</dt><dd>{{email}}</dd>
-            <dt>Spotify URI</dt><dd><a href="{{external_urls.spotify}}">{{external_urls.spotify}}</a></dd>
-            <dt>Link</dt><dd><a href="{{href}}">{{href}}</a></dd>
-            <dt>Profile Image</dt><dd class="clearfix"><a href="{{images.0.url}}">{{images.0.url}}</a></dd>
-            <dt>Country</dt><dd>{{country}}</dd>
-          </dl>
-        </div>
+      <div align="center">
+        <h2>"Creativity is just connecting things"</h2>
+        <img src="steve.jpeg">
+        <br>
       </div>
     </script>
 
     <script id="oauth-template" type="text/x-handlebars-template">
-      <h2>oAuth info</h2>
-      <dl class="dl-horizontal">
-        <dt>Access token</dt><dd class="text-overflow">{{access_token}}</dd>
-        <dt>Refresh token</dt><dd class="text-overflow">{{refresh_token}}></dd>
-      </dl>
+
     </script>
 	
 	<script id="playlist-template" type="text/x-handlebars-template">
-      <h2>Playlist info</h2>
-      <dl class="dl-horizontal">
-        <dt>Usernam</dt><dd class="text">{{items.0.name}}</dd>
-        <dt>Refreserrfh token</dt><dd class="text">{{href}}></dd>
-      </dl>
+    
     </script>
 	
 
@@ -128,6 +110,7 @@
 	
 	
       (function() {
+	  var noSongs = 0;
 	  var radios = document.getElementsByName('pubpri');
 	  var userFlag = false;
 	  var publicFlag = false;
@@ -192,7 +175,6 @@
 				  
                 }
             });
-    var section = document.querySelector('section.playlistlist');
 	var plistdrop = document.getElementById('plistdrop');
 	var requestURL = 'https://api.spotify.com/v1/me/playlists'
 	$.ajax(requestURL, {
@@ -211,29 +193,13 @@
      var lists = jsonObj['items'];
      
      for (var i = 0; i < lists.length; i++) {
-     var myArticle = document.createElement('article');
-     var myH2 = document.createElement('h2');
-     var myPara1 = document.createElement('p');
-     var myPara2 = document.createElement('p');
-     var myPara3 = document.createElement('p');
-     var myList = document.createElement('ul');
 	 var meList = document.createElement('option');
 
-     myH2.textContent = lists[i].name;
-     myPara1.textContent = 'ID: ' + lists[i].id;
-     myPara2.textContent = 'Tracks: ' + lists[i].tracks.total;
-     myPara3.textContent = 'URI:' + lists[i].uri;
 	 meList.textContent = lists[i].name;
 	 pListID.push(lists[i].id); 
 
-     myArticle.appendChild(myH2);
-     myArticle.appendChild(myPara1);
-     myArticle.appendChild(myPara2);
-     myArticle.appendChild(myPara3);
-     myArticle.appendChild(myList);
 	 plistdrop.add(meList);
 
-     section.appendChild(myArticle);
       }
     }
 			$.ajax({
@@ -255,25 +221,12 @@
               $('#loggedin').hide();
           }
 
-       document.getElementById('obtain-new-token').addEventListener('click', function() {
-            $.ajax({
-              url: '/refresh_token',
-              data: {
-                'refresh_token': refresh_token
-              }
-            }).done(function(data) {
-              access_token = data.access_token;
-              oauthPlaceholder.innerHTML = oauthTemplate({
-                access_token: access_token,
-                refresh_token: refresh_token
-              });
-            });
-          }, false);
+     
 		  
 		    document.getElementById('get-users-playlists').addEventListener('click', function() {
 			//songU = [];
 			getPlaylistAttributes(userid, pListID[plistdrop.selectedIndex]);
-			 document.getElementById('onemoment').innerHTML = 'One moment please...';
+			 document.getElementById('onemoment').innerHTML = '<p>One moment please...</p>';
 			 document.getElementById('get-users-playlists').disabled = true;
 			 document.getElementById('get-public-playlist').disabled = true;
 			setTimeout(function(){
@@ -288,7 +241,7 @@
 		  document.getElementById('get-public-playlist').addEventListener('click', function() {
 		  //songP = [];
 		  getPlaylistAttributes(pubUserID[slistdrop.selectedIndex],pubListID[slistdrop.selectedIndex]);
-		 document.getElementById('onemoment').innerHTML = 'One moment please...';
+		 document.getElementById('onemoment').innerHTML = '<p>One moment please...</p>';
 		 			 document.getElementById('get-users-playlists').disabled = true;
 			 document.getElementById('get-public-playlist').disabled = true;
 		  setTimeout(function(){
@@ -306,7 +259,7 @@
 		  
 		  document.getElementById('filter-playlists').addEventListener('click', function() {
 		  
-		  document.getElementById('onemoment').innerHTML = 'One moment please...';
+		  document.getElementById('onemoment').innerHTML = '<p>One moment please...</p>';
 		  document.getElementById('filter-playlists').disabled = true;
 		  setTimeout(function(){
 		  averageSong();
@@ -415,7 +368,8 @@
             for (var i = 0; i < songs.length; i++) {
 	        songID.push(songs[i].track.id);        
       }
-	   for (var j=0; j<songs.length; j++) (function(){
+	  if (songs.length > 50) {noSongs=50;} else {noSongs=songs.length;}
+	   for (var j=0; j<noSongs; j++) (function(){
 			var arequestURL = 'https://api.spotify.com/v1/audio-features/' + songID[j];
 				$.ajax(arequestURL, {
 		           method: 'GET',
