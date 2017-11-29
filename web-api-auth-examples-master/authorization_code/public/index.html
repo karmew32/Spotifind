@@ -51,9 +51,11 @@
 
 <text id="onemoment"></text>
 <button class="btn btn-success btn-sm" id="search-for-playlists">Search for playlists</button><br><br>
-<button class="btn btn-success btn-sm" id="get-public-playlist" disabled>Get songs from selected playlist</button><br><br>
+<button class="btn btn-success btn-sm" id="get-public-playlist" disabled>Get songs from selected public playlist</button><br><br>
 
-<p>You cannot filter until you have selected your own playlist and one to filter it by!</p><br>
+<p>You cannot filter until you have selected your own playlist and one to filter it by!</p>
+<p>If a playlist's data has been loaded, it will be shown as <span style="color:green">green</span> text.</p>
+<p id="usergreen">User</p><p id="publicgreen">Public</p><br>
 <button class="btn btn-success btn-sm" id="filter-playlists" disabled>Filter the playlist</button><br><br><br><br>
 
 
@@ -115,6 +117,7 @@
 	  var radios = document.getElementsByName('pubpri');
 	  var userFlag = false;
 	  var publicFlag = false;
+	  var searchFlag = false;
 	  var songA = [];
        var pListID = [];
 	   var pubListID = [];
@@ -235,7 +238,9 @@
 			document.getElementById('get-users-playlists').disabled = false;
 			document.getElementById('onemoment').innerHTML = ' ';
 			userFlag = true;
+			document.getElementById('usergreen').style.color = 'green';
 			checkFlags();
+			checkSearchFlag();
 			},2000);
 	
           }, false);
@@ -250,18 +255,22 @@
 		  document.getElementById('get-users-playlists').disabled = false;
 		  document.getElementById('onemoment').innerHTML = ' ';
 		  publicFlag = true;
+		  document.getElementById('publicgreen').style.color = 'green';
 		  checkFlags();
 		  },2000);
 		  }, false);
 		  
 		  document.getElementById('search-for-playlists').addEventListener('click', function() {
 		  findPublicPlaylist(document.getElementById('playlistkeyword').value);
+		  searchFlag = true;
 		  }, false);
 		  
 		  document.getElementById('filter-playlists').addEventListener('click', function() {
 		  
 		  document.getElementById('onemoment').innerHTML = '<p>One moment please...</p>';
 		  document.getElementById('filter-playlists').disabled = true;
+		  document.getElementById('get-public-playlist').disabled = true;
+		  document.getElementById('get-users-playlists').disabled = true;
 		  setTimeout(function(){
 		  averageSong();
 		  deviationVariance();
@@ -343,8 +352,13 @@
 		   document.getElementById('filterlist').innerHTML = '';
 		  document.getElementById('loggedin').style.display = 'block';
 		  document.getElementById('filteroptions').style.display = 'none';
+		  document.getElementById('get-users-playlists').disabled = false;
 		  userFlag = false;
 		  publicFlag = false;
+		  searchFlag = false;
+		  document.getElementById('usergreen').style.color = 'white';
+		  document.getElementById('publicgreen').style.color = 'white';
+		  checkSearchFlag();
 		}
 		//NOTE: the order playlists are returned is random
 		function getPlaylistAttributes(theuserid, theplaylistid){
@@ -485,6 +499,10 @@
 		  function isCertainlyUser(b){
 		  if(b){filterArray = songA.slice();} else {inputArray = songA.slice();}
 		  console.log('P is ' + inputArray.length + ' and U is ' + filterArray.length + ' and A is ' + songA.length);
+		  }
+		  
+		  function checkSearchFlag(){
+		      document.getElementById('get-public-playlist').disabled = !searchFlag;
 		  }
 		  
 		  function checkFlags(){
